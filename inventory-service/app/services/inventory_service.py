@@ -1,5 +1,7 @@
 import grpc
-from shared.aerolock_common.generated import inventory_pb2, inventory_pb2_grpc, common_pb2
+
+from aerolock_common.generated import inventory_pb2, inventory_pb2_grpc, common_pb2
+
 from app.db.session import Async_session_local
 from app.db.repository import InventoryRepository
 from app.lock.redis_lock import RedisLockManager
@@ -10,9 +12,6 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
         self.redis = redis_client
 
     async def AcquireLock(self, request: inventory_pb2.AcquireLockRequest, context: grpc.aio.ServicerContext) -> inventory_pb2.AcquireLockResponse:
-        """
-        Controls temporary seat locking in Redis to prevent race conditions.
-        """
         lock_manager = RedisLockManager(self.redis)
         success, token = await lock_manager.acquire_lock(request.seat_id)
 
@@ -23,13 +22,9 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
         )
 
     async def ConfirmBooking(self, request: inventory_pb2.ConfirmBookingRequest, context: grpc.aio.ServicerContext) -> inventory_pb2.ConfirmBookingResponse:
-        """
-        Finalizes the booking in PostgreSQL after validating the Redis lock and idempotency key.
-        """
         lock_manager = RedisLockManager(self.redis)
         lock_key = f"seat:{request.seat_id}:lock"
 
-        # 1. Critical Check: Is the lock token valid and still active?
         stored_token = await self.redis.get(lock_key)
         if not stored_token or stored_token.decode('utf-8') != request.token:
             return inventory_pb2.ConfirmBookingResponse(
@@ -38,7 +33,6 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
                 message="Lock expired or invalid token. You lost your chance."
             )
 
-        # 2. Lock is valid. Write to Postgres inside an isolated transaction.
         async with Async_session_local() as session:
             repo = InventoryRepository(session)
             success, booking_id = await repo.create_booking(
@@ -48,7 +42,6 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
             )
 
             if success:
-                # Payment and booking successful, release Redis lock immediately.
                 await lock_manager.release_lock(request.seat_id, request.token)
                 return inventory_pb2.ConfirmBookingResponse(
                     success=True,
@@ -63,9 +56,6 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
                 )
 
     async def ReleaseLock(self, request: inventory_pb2.ReleaseLockRequest, context: grpc.aio.ServicerContext) -> common_pb2.ErrorResponse:
-        """
-        Manually releases the lock if the user cancels before paying.
-        """
         lock_manager = RedisLockManager(self.redis)
         released = await lock_manager.release_lock(request.seat_id, request.token)
 

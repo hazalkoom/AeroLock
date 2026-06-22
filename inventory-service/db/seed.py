@@ -1,7 +1,7 @@
 import asyncio
 import sys
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -15,8 +15,8 @@ async def seed_database():
         flight1 = Flight(
             origin="CAI",
             destination="DXB",
-            departure_time=datetime.utcnow() + timedelta(days=5),
-            arrival_time=datetime.utcnow() + timedelta(days=5, hours=3),
+            departure_time=datetime.now(UTC) + timedelta(days=5),
+            arrival_time=datetime.now(UTC) + timedelta(days=5, hours=3),
             total_seats=10,
             price=250.00
         )
@@ -25,8 +25,8 @@ async def seed_database():
         flight2 = Flight(
             origin="LHR",
             destination="JFK",
-            departure_time=datetime.utcnow() + timedelta(days=10),
-            arrival_time=datetime.utcnow() + timedelta(days=10, hours=8),
+            departure_time=datetime.now(UTC) + timedelta(days=10),
+            arrival_time=datetime.now(UTC) + timedelta(days=10, hours=8),
             total_seats=10,
             price=450.00
         )
