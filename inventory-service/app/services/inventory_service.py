@@ -1,6 +1,6 @@
 import grpc
-from aerolock_common.generated import inventory_pb2, inventory_pb2_grpc, common_pb2
-from app.db.session import AsyncSessionLocal
+from shared.aerolock_common.generated import inventory_pb2, inventory_pb2_grpc, common_pb2
+from app.db.session import Async_session_local
 from app.db.repository import InventoryRepository
 from app.lock.redis_lock import RedisLockManager
 from redis.asyncio import Redis
@@ -39,7 +39,7 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
             )
 
         # 2. Lock is valid. Write to Postgres inside an isolated transaction.
-        async with AsyncSessionLocal() as session:
+        async with Async_session_local() as session:
             repo = InventoryRepository(session)
             success, booking_id = await repo.create_booking(
                 seat_id=request.seat_id,
