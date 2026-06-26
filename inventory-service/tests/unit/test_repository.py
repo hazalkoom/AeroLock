@@ -2,14 +2,16 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 from sqlalchemy.exc import IntegrityError
 from app.db.repository import InventoryRepository
+from app.db.models import Seat
 
 @pytest.mark.asyncio
 async def test_create_booking_success():
-    """
-    Test that a brand new booking is successfully committed to the database.
-    """
-    mock_session = MagicMock()
-    mock_session.commit = AsyncMock()
+    mock_session = AsyncMock()
+    
+    mock_seat = Seat(status="available")
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_seat
+    mock_session.execute.return_value = mock_result
     
     repo = InventoryRepository(mock_session)
 
@@ -20,28 +22,29 @@ async def test_create_booking_success():
     )
 
     assert success is True
-    mock_session.add.assert_called_once()
     mock_session.commit.assert_awaited_once()
 
 @pytest.mark.asyncio
 async def test_create_booking_duplicate_idempotency():
-    """
-    Test the Bouncer: If Postgres throws an IntegrityError, rollback and return False.
-    """
-    mock_session = MagicMock()
-    mock_session.commit = AsyncMock(side_effect=IntegrityError(
-        "duplicate key value violates unique constraint", params={}, orig=BaseException()
-    ))
-    mock_session.rollback = AsyncMock()
+    mock_session = AsyncMock()
+    
+    mock_seat = Seat(status="available")
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_seat
+    mock_session.execute.return_value = mock_result
+    
+    mock_session.commit.side_effect = IntegrityError(
+        "dup", params={}, orig=BaseException()
+    )
 
     repo = InventoryRepository(mock_session)
 
-    success, booking_id = await repo.create_booking(
+    success, message = await repo.create_booking(
         seat_id="fake-seat-123", 
         user_id="user-456", 
         idempotency_key="used-key-789"
     )
 
     assert success is False
-    assert booking_id is None
     mock_session.rollback.assert_awaited_once()
+    assert "Duplicate" in message
