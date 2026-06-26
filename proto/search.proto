@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package aerolock.search;
+
+import "common.proto";
+
+service SearchService {
+    rpc SearchFlights (SearchRequest) returns (SearchResponse);
+}
+
+message SearchRequest {
+  string origin = 1;
+  string destination = 2;
+  string date = 3; 
+}
+
+message SearchResponse {
+  // 'repeated' means an array or list. It returns a list of Flights.
+  repeated aerolock.common.Flight flights = 1;
+}

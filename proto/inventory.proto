@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package aerolock.inventory;
+
+import "common.proto";
+
+service InventoryService {
+  rpc AcquireLock (AcquireLockRequest) returns (AcquireLockResponse);
+  
+  rpc ConfirmBooking (ConfirmBookingRequest) returns (ConfirmBookingResponse);
+  
+  rpc ReleaseLock (ReleaseLockRequest) returns (aerolock.common.ErrorResponse);
+}
+
+message AcquireLockRequest {
+  string flight_id = 1;
+  string seat_id = 2;
+}
+
+message AcquireLockResponse {
+  bool success = 1;
+  string token = 2;
+  string message = 3; 
+}
+
+message ConfirmBookingRequest {
+  string seat_id = 1;
+  string user_id = 2;
+  string token = 3;
+  string idempotency_key = 4;
+}
+
+message ConfirmBookingResponse {
+  bool success = 1;
+  string booking_id = 2;
+  string message = 3;
+}
+
+message ReleaseLockRequest {
+  string seat_id = 1;
+  string token = 2;
+}
