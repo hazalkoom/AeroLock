@@ -22,7 +22,7 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
-import common_pb2 as common__pb2
+from . import common_pb2 as common__pb2
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0csearch.proto\x12\x0f\x61\x65rolock.search\x1a\x0c\x63ommon.proto\"B\n\rSearchRequest\x12\x0e\n\x06origin\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65stination\x18\x02 \x01(\t\x12\x0c\n\x04\x64\x61te\x18\x03 \x01(\t\":\n\x0eSearchResponse\x12(\n\x07\x66lights\x18\x01 \x03(\x0b\x32\x17.aerolock.common.Flight2a\n\rSearchService\x12P\n\rSearchFlights\x12\x1e.aerolock.search.SearchRequest\x1a\x1f.aerolock.search.SearchResponseb\x06proto3')

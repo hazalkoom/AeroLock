@@ -9,6 +9,7 @@ message Flight {
   string departure_time = 4;
   string arrival_time = 5;
   double price = 6;
+  int32 available_seats = 7;
 }
 
 message Seat {

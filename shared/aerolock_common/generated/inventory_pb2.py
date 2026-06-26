@@ -22,7 +22,7 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
-import common_pb2 as common__pb2
+from . import common_pb2 as common__pb2
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0finventory.proto\x12\x12\x61\x65rolock.inventory\x1a\x0c\x63ommon.proto\"8\n\x12\x41\x63quireLockRequest\x12\x11\n\tflight_id\x18\x01 \x01(\t\x12\x0f\n\x07seat_id\x18\x02 \x01(\t\"F\n\x13\x41\x63quireLockResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05token\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\"a\n\x15\x43onfirmBookingRequest\x12\x0f\n\x07seat_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12\r\n\x05token\x18\x03 \x01(\t\x12\x17\n\x0fidempotency_key\x18\x04 \x01(\t\"N\n\x16\x43onfirmBookingResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x12\n\nbooking_id\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\"4\n\x12ReleaseLockRequest\x12\x0f\n\x07seat_id\x18\x01 \x01(\t\x12\r\n\x05token\x18\x02 \x01(\t2\xb2\x02\n\x10InventoryService\x12^\n\x0b\x41\x63quireLock\x12&.aerolock.inventory.AcquireLockRequest\x1a\'.aerolock.inventory.AcquireLockResponse\x12g\n\x0e\x43onfirmBooking\x12).aerolock.inventory.ConfirmBookingRequest\x1a*.aerolock.inventory.ConfirmBookingResponse\x12U\n\x0bReleaseLock\x12&.aerolock.inventory.ReleaseLockRequest\x1a\x1e.aerolock.common.ErrorResponseb\x06proto3')
