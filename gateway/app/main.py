@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from app.core.config import settings
 from app.core.logging import logger
-from app.api import booking
+from app.api import booking, search
 from app.middleware.rate_limit import setup_rate_limiting, limiter
 import uvicorn
 import time
@@ -39,6 +39,8 @@ async def health_check(request: Request):
     }
 
 app.include_router(booking.router, prefix="/api/v1/booking", tags=["Booking Flow"])
+app.include_router(search.router, prefix="/api/v1/search", tags=["Search"])
+app.include_router(booking.router, prefix="/api/v1/booking", tags=["Booking"])
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=settings.GATEWAY_PORT, reload=True)
