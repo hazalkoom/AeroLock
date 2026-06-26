@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from app.core.config import settings
+import os
 from app.core.logging import logger
 from app.api import booking, search
 from app.middleware.rate_limit import setup_rate_limiting, limiter
@@ -35,7 +35,7 @@ async def health_check(request: Request):
     return {
         "status": "alive", 
         "service": "api-gateway",
-        "inventory_target": settings.INVENTORY_SERVICE_URL
+        "inventory_target": os.getenv("INVENTORY_SERVICE_URL", "inventory-service:50052")
     }
 
 app.include_router(booking.router, prefix="/api/v1/booking", tags=["Booking Flow"])
@@ -43,4 +43,5 @@ app.include_router(search.router, prefix="/api/v1/search", tags=["Search"])
 app.include_router(booking.router, prefix="/api/v1/booking", tags=["Booking"])
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=settings.GATEWAY_PORT, reload=True)
+    gateway_port = int(os.getenv("GATEWAY_PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=gateway_port, reload=True)

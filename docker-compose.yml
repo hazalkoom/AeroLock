@@ -1,11 +1,8 @@
-version: '3.8'
-
 services:
-  # 1. The PostgreSQL Database (For Inventory)
   postgres:
     image: postgres:16-alpine
     container_name: aerolock-postgres
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: aerolock_user
       POSTGRES_PASSWORD: password123
@@ -13,22 +10,84 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # This saves your database data to your hard drive so it doesn't get deleted when the container stops
       - postgres_data:/var/lib/postgresql/data
+      - ./inventory-service/db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aerolock_user -d aerolock"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  # 2. The Redis Cache & Lock Manager
   redis:
     image: redis:7-alpine
     container_name: aerolock-redis
-    restart: always
+    restart: unless-stopped
     ports:
       - "6379:6379"
-    # We pass a custom command to make Redis persist its data to disk
     command: redis-server --save 60 1 --loglevel warning
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-# Define the persistent volumes
+  inventory-service:
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+    container_name: aerolock-inventory-service
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://aerolock_user:password123@postgres:5432/aerolock
+      REDIS_URL: redis://redis:6379/0
+      INVENTORY_PORT: 50052
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "50052:50052"
+
+  search-service:
+    build:
+      context: .
+      dockerfile: search-service/Dockerfile
+    container_name: aerolock-search-service
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://aerolock_user:password123@postgres:5432/aerolock
+      REDIS_URL: redis://redis:6379/0
+      GRPC_PORT: 50051
+      CACHE_TTL: 60
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "50051:50051"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: aerolock-gateway
+    restart: unless-stopped
+    environment:
+      INVENTORY_SERVICE_URL: inventory-service:50052
+      SEARCH_SERVICE_URL: search-service:50051
+      GATEWAY_PORT: 8000
+    depends_on:
+      inventory-service:
+        condition: service_started
+      search-service:
+        condition: service_started
+    ports:
+      - "8000:8000"
+
 volumes:
   postgres_data:
   redis_data:

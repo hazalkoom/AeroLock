@@ -1,12 +1,14 @@
 import grpc
 from fastapi import HTTPException
+import os
 from aerolock_common.generated import search_pb2, search_pb2_grpc
 from app.core.logging import logger
 
 class SearchClient:
     def __init__(self):
         # Search Service runs on 50051
-        self.channel = grpc.aio.insecure_channel('localhost:50051')
+        search_service_url = os.getenv("SEARCH_SERVICE_URL", "search-service:50051")
+        self.channel = grpc.aio.insecure_channel(search_service_url)
         self.stub = search_pb2_grpc.SearchServiceStub(self.channel)
 
     async def search_flights(self, origin: str, destination: str, date: str) -> list[dict]:

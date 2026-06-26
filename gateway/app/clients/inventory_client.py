@@ -1,13 +1,13 @@
 import grpc
 from fastapi import HTTPException
-from app.core.config import settings
-
+import os
 from aerolock_common.generated import inventory_pb2, inventory_pb2_grpc
 
 class InventoryClient:
     def __init__(self):
-        # Establish an asynchronous channel to the Inventory Service (localhost:50052)
-        self.channel = grpc.aio.insecure_channel(settings.INVENTORY_SERVICE_URL)
+        # Establish an asynchronous channel to the Inventory Service
+        inventory_service_url = os.getenv("INVENTORY_SERVICE_URL", "inventory-service:50052")
+        self.channel = grpc.aio.insecure_channel(inventory_service_url)
         self.stub = inventory_pb2_grpc.InventoryServiceStub(self.channel)
 
     async def acquire_lock(self, seat_id: str) -> dict:
