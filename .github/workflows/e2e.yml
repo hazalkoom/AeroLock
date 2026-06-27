@@ -1,0 +1,62 @@
+name: End-to-End Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Start Services with Docker Compose
+      run: |
+        docker compose up -d
+
+    - name: Wait for Postgres & Redis health
+      run: |
+        # Wait up to 30 seconds for Postgres to become healthy
+        for i in {1..30}; do
+          if docker inspect --format='{{json .State.Health.Status}}' aerolock-postgres | grep -q "healthy"; then
+            echo "Postgres is healthy!"
+            break
+          fi
+          echo "Waiting for Postgres..."
+          sleep 1
+        done
+        
+        # Wait for Redis
+        for i in {1..30}; do
+          if docker inspect --format='{{json .State.Health.Status}}' aerolock-redis | grep -q "healthy"; then
+            echo "Redis is healthy!"
+            break
+          fi
+          echo "Waiting for Redis..."
+          sleep 1
+        done
+
+    - name: Seed Database
+      run: |
+        docker compose exec -T inventory-service python db/seed1.py
+
+    - name: Install Test Environment & Run E2E Tests
+      run: |
+        cd tests
+        pip install poetry
+        poetry install
+        poetry run pytest e2e/ -v
+
+    - name: Clean up Containers
+      if: always()
+      run: |
+        docker compose down -v
