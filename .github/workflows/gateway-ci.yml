@@ -1,0 +1,44 @@
+name: Gateway Service CI
+
+on:
+  push:
+    paths:
+      - 'gateway/**'
+      - 'shared/**'
+  pull_request:
+    paths:
+      - 'gateway/**'
+      - 'shared/**'
+
+jobs:
+  test-gateway:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install Shared Dependencies
+        run: |
+          cd shared
+          poetry install --no-root
+
+      - name: Install Gateway Dependencies
+        run: |
+          cd gateway
+          poetry install --no-root
+
+      - name: Run Gateway Unit Tests
+        run: |
+          cd gateway
+          poetry run pytest
