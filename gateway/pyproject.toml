@@ -12,7 +12,7 @@ dependencies = [
     "uvicorn[standard] (>=0.49.0,<0.50.0)",
     "grpcio (>=1.81.1,<2.0.0)",
     "grpcio-tools (>=1.81.1,<2.0.0)",
-    "aerolock-common @ file:///run/media/hazalkoom/FD16124010E85459/big%20project/AreoLock/aerolock/shared",
+    "aerolock-common @ ../shared",
     "pydantic-settings (>=2.14.2,<3.0.0)",
     "slowapi (>=0.1.10,<0.2.0)",
     "redis (>=8.0.1,<9.0.0)"
