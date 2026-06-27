@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aerolock-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # The following annotations help with WebSockets in NGINX ingress
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 8000

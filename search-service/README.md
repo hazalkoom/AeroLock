@@ -1,40 +1,24 @@
-# Search Service
+# AeroLock Search Service
 
-A gRPC microservice responsible for querying and caching flight schedules. It features high performance reads using a Redis cache-aside caching pattern.
+This service provides lightning-fast search capabilities for flights and seats.
 
-## Directory Structure
+## What it does
 
-```text
-search-service/
-├── app/
-│   ├── core/             # Configuration and logging utilities
-│   ├── db/               # SQLAlchemy models and repositories
-│   ├── server.py         # gRPC server implementation
-│   ├── cache.py          # Redis Cache Manager
-│   └── main.py           # Server entrypoint
-├── tests/
-│   └── unit/             # Unit tests for repositories and cache mechanisms
-└── pyproject.toml        # Poetry configuration
-```
+The Search Service is optimized for read-heavy operations:
+*   **Caching**: It uses Redis extensively to cache search results and availability data, reducing the load on the primary Postgres database.
+*   **Querying**: It provides endpoints to find flights based on various criteria.
+*   **gRPC Server**: It communicates with the Gateway via gRPC for high-speed data transfer.
 
-## How to Run Independently
+## Structure
+*   `grpc_server/`: Implementation of the search gRPC servicers.
+*   `services/`: Core logic for caching and database lookups.
+*   `Dockerfile`: Instructions for building the container image for this service.
 
+## Running Locally
+
+To run this service independently:
 ```bash
-# 1. Install dependencies
-poetry install
-
-# 2. Set environment variables (requires running Postgres and Redis)
-export DATABASE_URL="postgresql+asyncpg://aerolock_user:password123@localhost:5432/aerolock"
-export REDIS_URL="redis://localhost:6379/0"
-
-# 3. Run the gRPC server
-poetry run python -m app.main
+poetry install --no-root
+poetry run python -m grpc_server.main
 ```
-
-## Running Unit Tests
-
-To run the isolated unit tests (which mock the database session and Redis storage):
-
-```bash
-poetry run pytest
-```
+*(Note: Requires Postgres and Redis to be running)*

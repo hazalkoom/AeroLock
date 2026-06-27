@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aerolock-config
+  labels:
+    app: aerolock
+data:
+  # Internal URLs
+  INVENTORY_SERVICE_URL: "inventory-service:50052"
+  SEARCH_SERVICE_URL: "search-service:50051"
+  # Service Ports
+  GATEWAY_PORT: "8000"
+  INVENTORY_PORT: "50052"
+  GRPC_PORT: "50051"
+  # Other settings
+  CACHE_TTL: "60"

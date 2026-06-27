@@ -1,42 +1,24 @@
-# Gateway Service
+# AeroLock Gateway Service
 
-FastAPI edge gateway acting as the REST translation layer to backend gRPC services. Enforces rate limiting (using SlowAPI), structured logging, and streams real-time updates via WebSockets.
+This is the API Gateway for the AeroLock platform. It serves as the primary entry point for all external client requests.
 
-## Directory Structure
+## What it does
 
-```text
-gateway/
-├── app/
-│   ├── api/             # REST & WebSocket Route Controllers
-│   │   ├── booking.py   # Lock & Confirm REST API
-│   │   ├── search.py    # Search API
-│   │   └── websocket.py # Real-time flight update WebSocket
-│   ├── clients/         # gRPC client wrappers to communicate with backend services
-│   ├── core/            # Config, structured logging, and Event Pub/Sub helper
-│   ├── middleware/      # Rate-limiting middleware (SlowAPI)
-│   ├── schemas/         # Pydantic validation schemas
-│   └── main.py          # FastAPI application entrypoint
-├── tests/
-│   └── unit/            # Gateway unit tests (mocked gRPC channels)
-└── pyproject.toml       # Poetry configuration
-```
+The Gateway service acts as a reverse proxy and aggregator. Instead of external clients talking directly to the internal microservices (like Inventory or Search), they talk to the Gateway. The Gateway handles:
+*   **Routing**: Directing REST API calls to the appropriate gRPC backend services.
+*   **Rate Limiting**: Preventing abuse by limiting the number of requests a user can make.
+*   **Real-Time WebSockets**: Managing WebSocket connections to push live seat availability updates to users using Redis Pub/Sub.
 
-## How to Run Independently
+## Structure
+*   `app/api/`: Contains the FastAPI routers and endpoints (including the `websocket.py` implementation).
+*   `app/core/`: Core configurations, rate limiting, and dependency injection.
+*   `Dockerfile`: Instructions for building the container image for this service.
 
-Make sure you have `poetry` installed:
+## Running Locally
 
+To run this service independently:
 ```bash
-# 1. Install dependencies
-poetry install
-
-# 2. Run the Gateway application locally (requires backend services to be running to forward requests)
-poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+poetry install --no-root
+poetry run uvicorn app.main:app --reload --port 8000
 ```
-
-## Running Unit Tests
-
-To run the unit tests independently (which use mock gRPC channels, no backend services required):
-
-```bash
-poetry run pytest
-```
+*(Note: Requires Postgres and Redis to be running)*
