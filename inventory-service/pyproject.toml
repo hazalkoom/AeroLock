@@ -5,7 +5,6 @@ description = ""
 authors = [
     {name = "Mohamed Ahmed",email = "mwhamd345@gmail.com"}
 ]
-package-mode = false
 requires-python = ">=3.12,<4.0"
 dependencies = [
     "fastapi (>=0.136.3,<0.137.0)",
@@ -21,6 +20,8 @@ dependencies = [
     "aerolock-common @ ../shared",
 ]
 
+[tool.poetry]
+package-mode = false
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

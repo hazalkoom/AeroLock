@@ -68,7 +68,7 @@ jobs:
       run: |
         cd tests
         python -m pip install --upgrade pip poetry
-        poetry install --no-interaction --no-ansi
+        poetry install --no-root --no-interaction --no-ansi
         poetry run pytest security/ -v
 
     - name: Clean up Containers

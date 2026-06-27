@@ -1,8 +1,10 @@
-name: Unit Tests
+name: Unit Tests (All Services)
 
 on:
   push:
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -27,7 +29,7 @@ jobs:
     - name: Install Shared Package Dependencies
       run: |
         cd shared
-        poetry install
+        poetry install --no-root
 
     - name: Run Gateway Unit Tests
       run: |
@@ -38,11 +40,11 @@ jobs:
     - name: Run Inventory Service Unit Tests
       run: |
         cd inventory-service
-        poetry install
+        poetry install --no-root
         poetry run pytest
 
     - name: Run Search Service Unit Tests
       run: |
         cd search-service
-        poetry install
+        poetry install --no-root
         poetry run pytest
