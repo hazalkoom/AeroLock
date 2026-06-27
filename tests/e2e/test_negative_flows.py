@@ -7,8 +7,9 @@ BASE_URL = "http://localhost:8000/api/v1"
 @pytest.mark.asyncio
 async def test_lock_nonexistent_seat():
     """Negative: Try to lock a seat that is completely fake."""
-    import random
-    headers = {"X-Forwarded-For": f"203.0.113.{random.randint(1, 10000)}"}
+    import uuid
+    run_hex = uuid.uuid4().hex
+    headers = {"X-Forwarded-For": f"10.{int(run_hex[:2], 16) % 255}.{int(run_hex[2:4], 16) % 255}.50"}
     async with httpx.AsyncClient(headers=headers) as client:
         payload = {
             "flight_id": str(uuid.uuid4()), 
@@ -24,8 +25,9 @@ async def test_lock_nonexistent_seat():
 @pytest.mark.asyncio
 async def test_confirm_invalid_token():
     """Negative: Try to confirm a booking using a fake Redis token."""
-    import random
-    headers = {"X-Forwarded-For": f"203.0.113.{random.randint(1, 10000)}"}
+    import uuid
+    run_hex = uuid.uuid4().hex
+    headers = {"X-Forwarded-For": f"10.{int(run_hex[:2], 16) % 255}.{int(run_hex[2:4], 16) % 255}.51"}
     async with httpx.AsyncClient(headers=headers) as client:
         payload = {
             "seat_id": str(uuid.uuid4()),

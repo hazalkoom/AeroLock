@@ -53,3 +53,27 @@ docker run --rm -i --network host grafana/k6 run - < tests/performance/k6_bookin
 # Test the Search Read constraints
 docker run --rm -i --network host grafana/k6 run - < tests/performance/k6_search.js
 ```
+
+> **Note on k6 Search failures:** The search k6 test will show ~50% failure rate. This is intentional and expected — it proves the rate limiter is working correctly by blocking requests after the per-IP limit is hit.
+
+## 4. Real-Time WebSocket Manual Test
+
+The gateway exposes a WebSocket endpoint for real-time seat status events. To test it manually:
+
+```bash
+# Install wscat (one-time)
+npm install -g wscat
+
+# Terminal 1: Connect to a flight's real-time feed
+# Replace FLIGHT_ID with a real flight UUID from the database
+wscat -c ws://localhost:8000/api/v1/ws/flights/FLIGHT_ID
+
+# Terminal 2: Lock a seat on that flight
+curl -X POST http://localhost:8000/api/v1/booking/lock \
+  -H "Content-Type: application/json" \
+  -H "X-Forwarded-For: 10.0.0.1" \
+  -d '{"flight_id": "FLIGHT_ID", "seat_id": "SEAT_ID"}'
+
+# Terminal 1 should instantly receive:
+# {"flight_id": "...", "seat_id": "...", "status": "locked", "timestamp": "..."}
+```

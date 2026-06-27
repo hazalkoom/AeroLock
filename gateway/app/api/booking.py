@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from app.schemas.booking import LockRequest, ConfirmBookingRequest
 from app.clients.inventory_client import InventoryClient
 from app.middleware.rate_limit import limiter
+from app.core.events import publish_seat_event
 
 router = APIRouter()
 
@@ -11,16 +12,20 @@ async def get_inventory_client():
 @router.post("/lock", summary="Lock a seat for 10 minutes")
 @limiter.limit("10/minute") 
 async def acquire_lock(request: Request, payload: LockRequest, client: InventoryClient = Depends(get_inventory_client)):
-
-    return await client.acquire_lock(flight_id=payload.flight_id, seat_id=payload.seat_id)
+    result = await client.acquire_lock(flight_id=payload.flight_id, seat_id=payload.seat_id)
+    # Broadcast the seat lock to all WebSocket clients watching this flight
+    await publish_seat_event(flight_id=payload.flight_id, seat_id=payload.seat_id, status="locked")
+    return result
 
 @router.post("/confirm", summary="Confirm and pay for a booked seat")
 @limiter.limit("5/minute") 
 async def confirm_booking(request: Request, payload: ConfirmBookingRequest, client: InventoryClient = Depends(get_inventory_client)):
-    
-    return await client.confirm_booking(
+    result = await client.confirm_booking(
         seat_id=payload.seat_id,
         user_id=payload.user_id,
         idempotency_key=payload.idempotency_key,
         token=payload.token
     )
+    # Broadcast the seat confirmation to all WebSocket clients watching this flight
+    await publish_seat_event(flight_id=payload.seat_id, seat_id=payload.seat_id, status="confirmed")
+    return result

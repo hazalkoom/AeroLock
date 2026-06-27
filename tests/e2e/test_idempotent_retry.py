@@ -31,7 +31,8 @@ async def test_idempotent_booking_retry():
     user_id = "retry_user_123"
 
     import random
-    headers = {"X-Forwarded-For": f"203.0.113.{random.randint(1, 10000)}"}
+    run_hex = uuid.uuid4().hex
+    headers = {"X-Forwarded-For": f"10.{int(run_hex[:2], 16) % 255}.{int(run_hex[2:4], 16) % 255}.{random.randint(1, 200)}"}
     async with httpx.AsyncClient(headers=headers) as client:
         # 1. Lock the seat
         lock_res = await client.post(f"{BASE_URL}/booking/lock", json={"flight_id": flight_id, "seat_id": seat_id})

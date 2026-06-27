@@ -58,6 +58,8 @@ AeroLock is functionally close to an MVP, but it is not fully finished yet. The 
 - The containers now build from pip-installed runtime deps and an editable shared package, which avoids the previous Poetry lockfile/path mismatch.
 - The remaining deterministic container risk is still packaging drift if the runtime dependency list changes in one service and not the others.
 - All test suites (E2E, Security, Performance) are fully implemented and passing. The system sustained 800 concurrent users with 0% failure in local load tests.
+- **Real-Time WebSocket**: Added `WS /api/v1/ws/flights/{flight_id}` endpoint. Uses Redis Pub/Sub to broadcast seat lock and confirm events to all connected clients instantly.
+- **Developer Experience**: `docker-compose.override.yml` now mounts local code volumes with Uvicorn hot-reload and `--proxy-headers` for correct rate limiting in the dev environment.
 
 ## Current Status Judgment
 

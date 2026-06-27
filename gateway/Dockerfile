@@ -9,7 +9,7 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir fastapi uvicorn[standard] grpcio grpcio-tools pydantic-settings slowapi
+    && pip install --no-cache-dir fastapi uvicorn[standard] grpcio grpcio-tools pydantic-settings slowapi "redis[asyncio]"
 
 COPY shared/ /app/shared/
 COPY gateway/ /app/gateway/
@@ -20,4 +20,4 @@ WORKDIR /app/gateway
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips=*"]

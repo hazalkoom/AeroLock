@@ -12,25 +12,33 @@
 
 | Method | Path     | Description                                  |
 | ------ | -------- | --------------------------------------------- |
-| GET    | /search  | Search flights by origin, destination, date  |
+| GET    | /api/v1/search/  | Search flights by origin, destination, date  |
 
 ### Booking
 
-| Method | Path                | Description                                              |
-| ------ | ------------------- | --------------------------------------------------------- |
-| POST   | /bookings/lock      | Acquire a temporary lock on a seat (starts 10-min hold)  |
-| POST   | /bookings/confirm   | Confirm a booking after payment (requires idempotency key) |
-| DELETE | /bookings/lock/{id} | Release a held lock before it expires                    |
-| GET    | /bookings/{id}      | Get booking status                                       |
+| Method | Path                        | Description                                              |
+| ------ | --------------------------- | --------------------------------------------------------- |
+| POST   | /api/v1/booking/lock        | Acquire a temporary lock on a seat (starts 10-min hold)  |
+| POST   | /api/v1/booking/confirm     | Confirm a booking after payment (requires idempotency key) |
 
-### Status Codes Worth Noting
+### Real-Time (WebSocket)
 
-| Code | Meaning                                                |
-| ---- | ------------------------------------------------------- |
-| 200  | Success                                                |
-| 423  | Seat lock already held by another client (try again)  |
-| 409  | Idempotency key conflict (duplicate confirm, no-op)   |
-| 429  | Rate limit exceeded (100 req/min per API key)         |
+| Method    | Path                                  | Description                                              |
+| --------- | ------------------------------------- | --------------------------------------------------------- |
+| WebSocket | /api/v1/ws/flights/{flight_id}        | Subscribe to real-time seat status changes for a flight  |
+
+Connect with: `ws://localhost:8000/api/v1/ws/flights/{flight_id}`
+
+The server pushes a JSON message whenever a seat on this flight is locked or confirmed:
+```json
+{
+  "flight_id": "3fa85f64-...",
+  "seat_id":   "abc123...",
+  "status":    "locked",
+  "timestamp": "2026-06-27T11:40:00Z"
+}
+```
+Status values: `"locked"` (10-min hold acquired) or `"confirmed"` (permanently booked).
 
 ---
 

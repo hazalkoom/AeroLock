@@ -1,17 +1,21 @@
-version: '3'
-
 services:
   gateway:
+    # Mount the local gateway and shared code so changes reflect immediately without rebuilding the image
     volumes:
       - ./gateway:/app/gateway
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --proxy-headers --forwarded-allow-ips "*"
+      - ./shared:/app/shared
+    # Use uvicorn's native reload flag for hot-reloading
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--proxy-headers", "--forwarded-allow-ips=*"]
 
   inventory-service:
+    # Mount the local inventory and shared code
+    # (Note: Python doesn't hot-reload by default, but this lets you apply changes with just `docker restart aerolock-inventory-service` instead of a full image rebuild!)
     volumes:
       - ./inventory-service:/app/inventory-service
-    command: python -m app.main --reload
+      - ./shared:/app/shared
 
   search-service:
+    # Mount the local search and shared code
     volumes:
       - ./search-service:/app/search-service
-    command: python -m app.main --reload
+      - ./shared:/app/shared

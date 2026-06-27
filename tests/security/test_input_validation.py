@@ -13,7 +13,8 @@ async def test_search_input_validation_sql_injection():
     """
     # The API expects exactly 3 character airport codes.
     malicious_origin = "CAI'; DROP TABLE flights;--"
-    headers = {"X-Forwarded-For": f"203.0.113.{random.randint(1000, 9999)}"}
+    run_hex = uuid.uuid4().hex
+    headers = {"X-Forwarded-For": f"10.{int(run_hex[:2], 16) % 255}.{int(run_hex[2:4], 16) % 255}.60"}
     
     async with httpx.AsyncClient(headers=headers) as client:
         res = await client.get(f"{BASE_URL}/search/?origin={malicious_origin}&destination=DXB&date=2024-12-01")
@@ -27,7 +28,8 @@ async def test_lock_input_validation_malformed_json():
     Test that malformed JSON or incorrect data types are properly handled 
     by Pydantic and do not cause a 500 Internal Server Error.
     """
-    headers = {"X-Forwarded-For": f"203.0.113.{random.randint(1000, 9999)}"}
+    run_hex = uuid.uuid4().hex
+    headers = {"X-Forwarded-For": f"10.{int(run_hex[:2], 16) % 255}.{int(run_hex[2:4], 16) % 255}.61"}
     
     # 1. Missing fields
     payload_missing = {"flight_id": str(uuid.uuid4())}

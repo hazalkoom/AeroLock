@@ -1,15 +1,32 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 import os
 from app.core.logging import logger
+from app.core.events import init_redis, close_redis
 from app.api import booking, search
+from app.api import websocket
 from app.middleware.rate_limit import setup_rate_limiting, limiter
 import uvicorn
 import time
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage startup and shutdown events."""
+    # Startup: initialize the shared Redis connection for Pub/Sub
+    await init_redis()
+    logger.info("Redis Pub/Sub connection initialized.")
+    yield
+    # Shutdown: close the Redis connection cleanly
+    await close_redis()
+    logger.info("Redis Pub/Sub connection closed.")
+
+
 app = FastAPI(
     title="AeroLock API Gateway",
-    description="REST to gRPC translation layer with Rate Limiting and JSON Logging.",
-    version="1.0.0"
+    description="REST to gRPC translation layer with Rate Limiting, JSON Logging, and Real-Time WebSocket seat events.",
+    version="1.1.0",
+    lifespan=lifespan,
 )
 
 # 1. Initialize Rate Limiting
@@ -40,7 +57,7 @@ async def health_check(request: Request):
 
 app.include_router(booking.router, prefix="/api/v1/booking", tags=["Booking Flow"])
 app.include_router(search.router, prefix="/api/v1/search", tags=["Search"])
-app.include_router(booking.router, prefix="/api/v1/booking", tags=["Booking"])
+app.include_router(websocket.router, prefix="/api/v1/ws", tags=["Real-Time"])
 
 if __name__ == "__main__":
     gateway_port = int(os.getenv("GATEWAY_PORT", 8000))

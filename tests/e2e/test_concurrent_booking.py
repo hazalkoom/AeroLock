@@ -2,6 +2,7 @@ import pytest
 import httpx
 import asyncio
 import asyncpg
+import uuid
 
 BASE_URL = "http://localhost:8000/api/v1"
 DB_URL = "postgresql://aerolock_user:password123@localhost:5432/aerolock"
@@ -21,11 +22,12 @@ async def get_fresh_seat():
         pytest.skip("No available seats left in the database.")
     return str(row['flight_id']), str(row['id'])
 
-async def attempt_lock(client: httpx.AsyncClient, flight_id: str, seat_id: str, user_index: int):
-    """Simulates a unique user bypassing the rate limiter with a spoofed IP."""
+async def attempt_lock(client: httpx.AsyncClient, flight_id: str, seat_id: str, run_id: str, user_index: int):
+    """Simulates a unique user bypassing the rate limiter with a globally unique spoofed IP."""
     payload = {"flight_id": flight_id, "seat_id": seat_id}
-    # Uvicorn will now respect this header because of --proxy-headers
-    headers = {"X-Forwarded-For": f"203.0.113.{user_index}"} 
+    # Use a UUID-based unique octets so IPs never collide between test runs
+    unique_ip = f"10.{int(run_id[:2], 16) % 255}.{int(run_id[2:4], 16) % 255}.{user_index + 1}"
+    headers = {"X-Forwarded-For": unique_ip}
     
     return await client.post(f"{BASE_URL}/booking/lock", json=payload, headers=headers)
 
@@ -36,11 +38,10 @@ async def test_concurrent_seat_locking():
     """
     flight_id, seat_id = await get_fresh_seat()
 
-    import random
-    headers = {"X-Forwarded-For": f"203.0.113.{random.randint(1, 10000)}"}
-    async with httpx.AsyncClient(headers=headers) as client:
-        # Fire 10 concurrent requests at the exact same seat
-        tasks = [attempt_lock(client, flight_id, seat_id, i) for i in range(10)]
+    run_id = uuid.uuid4().hex  # Unique per test run — prevents rate limit bleed
+    async with httpx.AsyncClient() as client:
+        # Fire 10 concurrent requests at the exact same seat, each with a unique IP
+        tasks = [attempt_lock(client, flight_id, seat_id, run_id, i) for i in range(10)]
         responses = await asyncio.gather(*tasks)
         
         success_count = 0
@@ -60,12 +61,16 @@ async def test_concurrent_seat_locking():
 
         # Clean up: Confirm booking for the winner to release lock and mark seat booked
         if success_token:
-            import uuid
+            winner_ip = f"10.{int(run_id[:2], 16) % 255}.{int(run_id[2:4], 16) % 255}.100"
             confirm_payload = {
                 "seat_id": seat_id,
                 "user_id": "concurrent_winner",
                 "token": success_token,
                 "idempotency_key": str(uuid.uuid4())
             }
-            confirm_res = await client.post(f"{BASE_URL}/booking/confirm", json=confirm_payload)
+            confirm_res = await client.post(
+                f"{BASE_URL}/booking/confirm",
+                json=confirm_payload,
+                headers={"X-Forwarded-For": winner_ip}
+            )
             assert confirm_res.status_code == 200
