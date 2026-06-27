@@ -1,0 +1,31 @@
+version: 2
+updates:
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Maintain dependencies for Gateway Service
+  - package-ecosystem: "pip" # Poetry is supported via the pip ecosystem
+    directory: "/gateway"
+    schedule:
+      interval: "weekly"
+
+  # Maintain dependencies for Inventory Service
+  - package-ecosystem: "pip"
+    directory: "/inventory-service"
+    schedule:
+      interval: "weekly"
+
+  # Maintain dependencies for Search Service
+  - package-ecosystem: "pip"
+    directory: "/search-service"
+    schedule:
+      interval: "weekly"
+
+  # Maintain dependencies for Shared Package
+  - package-ecosystem: "pip"
+    directory: "/shared"
+    schedule:
+      interval: "weekly"

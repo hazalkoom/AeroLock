@@ -41,4 +41,11 @@ jobs:
       - name: Run Search Unit Tests
         run: |
           cd search-service
-          poetry run pytest
+          poetry run pytest --cov=. --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./search-service/coverage.xml
+          flags: search

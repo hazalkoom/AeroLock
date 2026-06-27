@@ -41,4 +41,11 @@ jobs:
       - name: Run Gateway Unit Tests
         run: |
           cd gateway
-          poetry run pytest
+          poetry run pytest --cov=. --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./gateway/coverage.xml
+          flags: gateway
