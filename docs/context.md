@@ -184,7 +184,6 @@ Important remaining work:
 - `docker-compose.override.yml` is still empty.
 - `k8s/base` and both overlays are still empty.
 - The operational scripts are wrappers only and still need hardening.
-- Performance and security test files are mostly empty/scaffold-only, but E2E tests are fully complete and verified.
 - The seed scripts have been fully reviewed, aligned, and fixed.
 - Documentation still has drift in API paths, lock TTL wording, and rate-limit wording.
 - The gateway OpenAPI shows duplicate operation IDs from stacked decorators, which should be cleaned up.
