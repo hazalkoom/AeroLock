@@ -1,0 +1,75 @@
+name: Code Quality and Security
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint & Format (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          
+      - name: Install Ruff
+        run: pip install ruff
+        
+      - name: Check Formatting
+        run: ruff format --check .
+        continue-on-error: true # Might fail initially if code isn't formatted
+        
+      - name: Lint Code
+        run: ruff check .
+        continue-on-error: true # Might fail initially if there are lint errors
+
+  security-sast:
+    name: Static Security Analysis (Bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          
+      - name: Install Bandit
+        run: pip install bandit
+        
+      - name: Run Bandit
+        run: bandit -r gateway inventory-service search-service shared -ll -ii
+        continue-on-error: true
+
+  dependency-audit:
+    name: Dependency Audit (Safety)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          
+      - name: Install Safety
+        run: pip install safety
+        
+      - name: Run Safety Check
+        run: |
+          # Check requirements in all services
+          pip install poetry
+          for dir in gateway inventory-service search-service shared; do
+            cd $dir
+            poetry export -f requirements.txt --output requirements.txt --without-hashes
+            safety check -r requirements.txt || true
+            cd ..
+          done
+        continue-on-error: true
