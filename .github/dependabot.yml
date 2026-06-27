@@ -5,27 +5,47 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions-updates:
+        patterns:
+          - "*" # Groups all GitHub Actions updates into a single PR
 
   # Maintain dependencies for Gateway Service
-  - package-ecosystem: "pip" # Poetry is supported via the pip ecosystem
+  - package-ecosystem: "pip" 
     directory: "/gateway"
     schedule:
       interval: "weekly"
+    groups:
+      gateway-deps:
+        patterns:
+          - "*" # Groups all Gateway dependencies into a single PR
 
   # Maintain dependencies for Inventory Service
   - package-ecosystem: "pip"
     directory: "/inventory-service"
     schedule:
       interval: "weekly"
+    groups:
+      inventory-deps:
+        patterns:
+          - "*" # Groups all Inventory dependencies into a single PR
 
   # Maintain dependencies for Search Service
   - package-ecosystem: "pip"
     directory: "/search-service"
     schedule:
       interval: "weekly"
+    groups:
+      search-deps:
+        patterns:
+          - "*" # Groups all Search dependencies into a single PR
 
   # Maintain dependencies for Shared Package
   - package-ecosystem: "pip"
     directory: "/shared"
     schedule:
       interval: "weekly"
+    groups:
+      shared-deps:
+        patterns:
+          - "*" # Groups all Shared dependencies into a single PR
