@@ -29,8 +29,8 @@ spec:
     spec:
       containers:
         - name: inventory-service
-          image: hazalkoom/aerolock-inventory-service:latest
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/hazalkoom/aerolock-inventory-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 50052
           envFrom:

@@ -29,8 +29,8 @@ spec:
     spec:
       containers:
         - name: search-service
-          image: hazalkoom/aerolock-search-service:latest
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/hazalkoom/aerolock-search-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 50051
           envFrom:
