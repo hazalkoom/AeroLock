@@ -5,12 +5,12 @@ from datetime import datetime, timedelta, UTC
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.db.session import Async_session_local
+from app.db.session import AsyncSessionLocal
 from app.db.models import Flight, Seat
 
 async def seed_database():
     print("Starting database seed...")
-    async with Async_session_local() as session:
+    async with AsyncSessionLocal() as session:
         # Create Flight 1 (Cairo to Dubai)
         flight1 = Flight(
             origin="CAI",

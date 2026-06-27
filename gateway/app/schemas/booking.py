@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 
 class LockRequest(BaseModel):
+    flight_id: str = Field(..., description="The UUID of the flight")
     seat_id: str = Field(..., description="The UUID of the seat the user wants to lock")
 
 class ConfirmBookingRequest(BaseModel):

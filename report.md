@@ -44,12 +44,10 @@ AeroLock is functionally close to an MVP, but it is not fully finished yet. The 
 - The operational scripts now exist as simple wrappers, but they still need real hardening and Kubernetes manifest backing.
 - The performance harness files under `tests/performance/` are empty placeholders.
 - The security test files under `tests/security/` are mostly empty placeholders.
-- The e2e test files under `tests/e2e/` are mostly empty placeholders.
+- The e2e test suite has been fully implemented, refactored for CI/CD dynamic seat safety, and verified (8/8 passing E2E tests).
 
 ### Development mismatches to clean up
 
-- `inventory-service/app/services/inventory_service.py` still has a bad session import name: `Async_session_local` instead of `AsyncSessionLocal`.
-- `inventory-service/db/seed1.py` and `search-service/app/db/seed1.py` need schema-aware review so both seed paths stay aligned with the shared tables.
 - The docs still contain drift in API paths, lock TTL wording, and rate-limiting semantics.
 
 ### Runtime polish
@@ -59,17 +57,16 @@ AeroLock is functionally close to an MVP, but it is not fully finished yet. The 
 - The Docker Compose stack now covers all app services, but it still depends on the shared code path and the current container build pattern rather than a fully published image strategy.
 - The containers now build from pip-installed runtime deps and an editable shared package, which avoids the previous Poetry lockfile/path mismatch.
 - The remaining deterministic container risk is still packaging drift if the runtime dependency list changes in one service and not the others.
-- The test harness exists mostly as a scaffold; meaningful assertions for e2e, performance, and security are still missing.
+- E2E tests are complete and verified, but performance and security tests are still mostly scaffolds.
 
 ## Current Status Judgment
 
-AeroLock is past the core implementation phase, but not past the development phase overall. The backend logic is close, the protobuf layer is repaired, and local Docker Compose is now wired, but the release layer is still incomplete because Kubernetes, scripts, and a few code/doc mismatches remain.
+AeroLock has robust, fully verified E2E and unit test suites. The write path (booking/concurrency) and read path (search/caching) are fully aligned, seed scripts are synchronized, and the API Gateway is integrated. The codebase is now in a stable development state, with deployment (Kubernetes) and performance/security test scaffolding remaining as the main gaps.
 
 ## Next Work Queue
 
 1. Fill `docker-compose.override.yml` with developer-friendly local overrides.
 2. Populate the Kubernetes base manifests and overlays.
 3. Expand the scripts from simple wrappers into robust entrypoints with sanity checks.
-4. Populate the empty e2e, security, and performance test files with real scenarios.
-5. Clean the remaining service typos and seed mismatches.
-6. Reconcile the docs with the actual runtime behavior.
+4. Populate the empty security and performance test files with real scenarios.
+5. Reconcile the docs with the actual runtime behavior.

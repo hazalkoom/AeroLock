@@ -6,7 +6,7 @@ from app.services.inventory_service import InventoryService
 @pytest.mark.asyncio
 @patch("app.services.inventory_service.RedisLockManager")
 @patch("app.services.inventory_service.InventoryRepository")
-@patch("app.services.inventory_service.Async_session_local")
+@patch("app.services.inventory_service.AsyncSessionLocal")
 async def test_confirm_booking_idempotency_rejection(mock_session_maker, mock_repo_class, mock_lock_class):
     """
     Test that the gRPC service correctly handles a duplicate idempotency key rejection from the Repo.

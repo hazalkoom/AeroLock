@@ -5,8 +5,10 @@ from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
 
+import os
+
 # Connection to the shared Postgres DB
-DATABASE_URL = "postgresql+asyncpg://aerolock_user:password123@localhost:5432/aerolock"
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://aerolock_user:password123@localhost:5432/aerolock")
 
 # Using 3-letter codes to strictly respect your VARCHAR(10) schema limit
 CITIES = ["CAI", "DXB", "LHR", "JFK", "PAR", "TYO", "BER", "RUH"]

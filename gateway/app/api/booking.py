@@ -12,7 +12,7 @@ async def get_inventory_client():
 @limiter.limit("10/minute") 
 async def acquire_lock(request: Request, payload: LockRequest, client: InventoryClient = Depends(get_inventory_client)):
 
-    return await client.acquire_lock(seat_id=payload.seat_id)
+    return await client.acquire_lock(flight_id=payload.flight_id, seat_id=payload.seat_id)
 
 @router.post("/confirm", summary="Confirm and pay for a booked seat")
 @limiter.limit("5/minute") 

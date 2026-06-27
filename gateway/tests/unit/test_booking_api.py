@@ -29,7 +29,7 @@ def test_acquire_lock_success():
     # 3. Fire the request
     response = client.post(
         "/api/v1/booking/lock",
-        json={"seat_id": "valid-seat-uuid"}
+        json={"flight_id": "valid-flight-uuid", "seat_id": "valid-seat-uuid"}
     )
 
     # 4. Assertions
@@ -44,15 +44,26 @@ def test_acquire_lock_missing_seat_id():
     Test that Pydantic blocks the request with a 422 Unprocessable Entity 
     if the frontend developer forgets to send the seat_id.
     """
-    # Notice we don't even need to mock the client here, because Pydantic 
-    # intercepts the bad JSON before the route logic even executes.
     response = client.post(
         "/api/v1/booking/lock",
-        json={} # Empty JSON!
+        json={"flight_id": "valid-flight-uuid"} # missing seat_id!
     )
 
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "seat_id"]
+
+def test_acquire_lock_missing_flight_id():
+    """
+    Test that Pydantic blocks the request with a 422 Unprocessable Entity 
+    if the frontend developer forgets to send the flight_id.
+    """
+    response = client.post(
+        "/api/v1/booking/lock",
+        json={"seat_id": "valid-seat-uuid"} # missing flight_id!
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "flight_id"]
 
 def test_confirm_booking_success():
     """

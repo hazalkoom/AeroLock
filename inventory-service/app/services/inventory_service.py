@@ -2,7 +2,7 @@ import grpc
 
 from aerolock_common.generated import inventory_pb2, inventory_pb2_grpc, common_pb2
 
-from app.db.session import Async_session_local
+from app.db.session import AsyncSessionLocal
 from app.db.repository import InventoryRepository
 from app.lock.redis_lock import RedisLockManager
 from redis.asyncio import Redis
@@ -12,6 +12,26 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
         self.redis = redis_client
 
     async def AcquireLock(self, request: inventory_pb2.AcquireLockRequest, context: grpc.aio.ServicerContext) -> inventory_pb2.AcquireLockResponse:
+        # 1. Check PostgreSQL first to see if the seat is real and available
+        async with AsyncSessionLocal() as session:
+            repo = InventoryRepository(session)
+            seat = await repo.get_seat(request.seat_id)
+            
+            if not seat:
+                return inventory_pb2.AcquireLockResponse(
+                    success=False, 
+                    token="", 
+                    message="Seat does not exist"
+                )
+                
+            if seat.status != 'available':
+                return inventory_pb2.AcquireLockResponse(
+                    success=False, 
+                    token="", 
+                    message="Seat is already booked"
+                )
+
+        # 2. Only if it's real and available, try to grab the Redis Lock
         lock_manager = RedisLockManager(self.redis)
         success, token = await lock_manager.acquire_lock(request.seat_id)
 
@@ -33,7 +53,7 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
                 message="Lock expired or invalid token. You lost your chance."
             )
 
-        async with Async_session_local() as session:
+        async with AsyncSessionLocal() as session:
             repo = InventoryRepository(session)
             success, booking_id = await repo.create_booking(
                 seat_id=request.seat_id,

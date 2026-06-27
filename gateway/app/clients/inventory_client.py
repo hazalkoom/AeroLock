@@ -10,22 +10,17 @@ class InventoryClient:
         self.channel = grpc.aio.insecure_channel(inventory_service_url)
         self.stub = inventory_pb2_grpc.InventoryServiceStub(self.channel)
 
-    async def acquire_lock(self, seat_id: str) -> dict:
+    async def acquire_lock(self, flight_id: str, seat_id: str) -> dict:
         try:
-            request = inventory_pb2.AcquireLockRequest(seat_id=seat_id)
+            request = inventory_pb2.AcquireLockRequest(flight_id=flight_id, seat_id=seat_id)
             response = await self.stub.AcquireLock(request)
             
+            # CRITICAL: If success is False, we MUST raise an exception
             if not response.success:
-                # 409 Conflict: The seat is already locked by someone else
                 raise HTTPException(status_code=409, detail=response.message)
                 
-            return {
-                "success": response.success, 
-                "token": response.token, 
-                "message": response.message
-            }
+            return {"token": response.token, "message": response.message}
         except grpc.aio.AioRpcError as e:
-            # 500 Internal Server Error: The Inventory Service is dead or unreachable
             raise HTTPException(status_code=500, detail=f"gRPC Error: {e.details()}")
 
     async def confirm_booking(self, seat_id: str, user_id: str, idempotency_key: str, token: str) -> dict:
