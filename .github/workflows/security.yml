@@ -2,9 +2,8 @@ name: Security Tests
 
 on:
   push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   security-tests:
@@ -21,29 +20,45 @@ jobs:
 
     - name: Start Services with Docker Compose
       run: |
-        docker compose up -d
+        docker compose up -d --build
 
     - name: Wait for Postgres & Redis health
       run: |
-        # Wait up to 30 seconds for Postgres to become healthy
-        for i in {1..30}; do
+        # Wait up to 60 seconds for Postgres to become healthy
+        postgres_ready=0
+        for i in {1..60}; do
           if docker inspect --format='{{json .State.Health.Status}}' aerolock-postgres | grep -q "healthy"; then
             echo "Postgres is healthy!"
+            postgres_ready=1
             break
           fi
           echo "Waiting for Postgres..."
           sleep 1
         done
+
+        if [ "$postgres_ready" -ne 1 ]; then
+          echo "Postgres did not become healthy in time"
+          docker compose logs postgres
+          exit 1
+        fi
         
-        # Wait for Redis
-        for i in {1..30}; do
+        # Wait up to 60 seconds for Redis to become healthy
+        redis_ready=0
+        for i in {1..60}; do
           if docker inspect --format='{{json .State.Health.Status}}' aerolock-redis | grep -q "healthy"; then
             echo "Redis is healthy!"
+            redis_ready=1
             break
           fi
           echo "Waiting for Redis..."
           sleep 1
         done
+
+        if [ "$redis_ready" -ne 1 ]; then
+          echo "Redis did not become healthy in time"
+          docker compose logs redis
+          exit 1
+        fi
 
     - name: Seed Database
       run: |
@@ -52,8 +67,8 @@ jobs:
     - name: Install Test Environment & Run Security Tests
       run: |
         cd tests
-        pip install poetry
-        poetry install
+        python -m pip install --upgrade pip poetry
+        poetry install --no-interaction --no-ansi
         poetry run pytest security/ -v
 
     - name: Clean up Containers

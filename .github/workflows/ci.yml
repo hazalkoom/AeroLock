@@ -2,9 +2,8 @@ name: Unit Tests
 
 on:
   push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   unit-tests:
@@ -33,7 +32,7 @@ jobs:
     - name: Run Gateway Unit Tests
       run: |
         cd gateway
-        poetry install
+        poetry install --no-root
         poetry run pytest
 
     - name: Run Inventory Service Unit Tests
