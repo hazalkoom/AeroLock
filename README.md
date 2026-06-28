@@ -1,37 +1,50 @@
 # AeroLock
 
-AeroLock is a real-time, distributed backend API engine that prevents double-booking of flight seats using a Redis distributed lock and a PostgreSQL ACID ledger. It features extremely low-latency reads via Redis cache-aside and bullet-proof idempotent booking confirmations.
+AeroLock is a high-performance, real-time distributed flight booking engine designed to prevent double-booking of flight seats using a Redis distributed locking mechanism and a PostgreSQL ACID ledger. It features extremely low-latency reads via Redis cache-aside caching, bullet-proof idempotent booking confirmations, and real-time updates via WebSockets.
 
-🚀 **Performance Benchmarks:** Our local development infrastructure sustains up to **800 concurrent users** and **over 300+ Requests Per Second (RPS)** with **0% failure rate** and a 95th percentile latency of under 350ms!
+🌐 **Deployed Version:** [http://YOUR_AZURE_VM_IP](http://YOUR_AZURE_VM_IP) *(Replace with your Azure VM Public IP once deployed)*
 
-## ⚡ Quick Start
+🚀 **Performance Benchmarks:** Our local development infrastructure sustains up to **800 concurrent users** and **over 300+ Requests Per Second (RPS)** with **0% failure rate** and a 95th percentile latency of under 350ms.
 
-1. **Start the Stack** (Postgres, Redis, Gateway, Search, Inventory):
-   ```bash
-   ./scripts/run_local.sh
-   ```
+---
 
-2. **Access the API**:
-   - Swagger Documentation: `http://localhost:8000/docs`
-   - Gateway Health: `http://localhost:8000/health`
-   - Test endpoints: `/api/v1/search` and `/api/v1/booking/lock`
+## 🏗️ Architecture Overview
+AeroLock is built using a modern, containerized microservices architecture:
+*   **Gateway Service (`gateway/`)**: A FastAPI edge service. Exposes public REST endpoints, applies rate limiting, handles live WebSocket events, and routes gRPC commands to internal services.
+*   **Inventory Service (`inventory-service/`)**: Manages flight database bookings and handles concurrent seat locking using Redis-based mutual exclusion (Redlock).
+*   **Search Service (`search-service/`)**: Exposes read-only flight and seat search queries over gRPC with a Redis cache-aside layer.
+*   **Shared Library (`shared/`)**: Holds protobuf contract files and automatically generated Python gRPC stubs.
+*   **Infrastructure (`k8s/`)**: Fully production-ready Kubernetes manifests including ConfigMaps, Secrets, StatefulSets for databases, Deployments with auto-scaling replicas, and an Ingress controller.
 
-3. **Run the Tests**:
-   - E2E Tests: `cd tests && poetry run pytest e2e/`
-   - Security Suite: `cd tests && poetry run pytest security/`
-   - Load Testing: `cd tests && poetry run locust -f performance/locustfile.py`
+---
 
-## 📚 Documentation
+## ⚡ Running the Project Locally
 
-For full project details, architecture maps, and development logs, please explore the [docs/](docs/) folder:
+### Prerequisites
+*   Docker and Docker Compose installed.
 
-- 🗺️ **[context.md](docs/context.md)**: Fast-start map for the repository layout and service architecture.
-- 📊 **[report.md](docs/report.md)**: Current development status, completed milestones, and upcoming roadmap.
-- 🏗️ **[Architecture.md](docs/Architecture.md)**: Detailed system architecture, data models, and component responsibilities.
-- 🚀 **[Deployment.md](docs/Deployment.md)**: Instructions for deploying the MVP on a single VPS.
-- 🆓 **[Deployment_Free.md](docs/Deployment_Free.md)**: Instructions for deploying using free-tier services (Render, Supabase, Upstash).
-- 🧠 **[Design_Decisions.md](docs/Design_Decisions.md)**: Log of technical design choices and trade-offs.
-- 📚 **[Learning_Path.md](docs/Learning_Path.md)**: A guided checklist for understanding the stack (FastAPI, Redis, Postgres, gRPC).
-- 📋 **[Requirements.md](docs/Requirements.md)**: Core functional and non-functional requirements of the system.
-- 🧪 **[Testing.md](docs/Testing.md)**: Strategy and instructions for Unit, E2E, Performance, and Security testing.
-- 🌐 **[api.md](docs/api.md)**: Reference for the public REST endpoints and internal gRPC APIs.
+### Start the Stack
+To boot the database, cache, and all microservices together:
+```bash
+./scripts/run_local.sh
+```
+This script will build the Docker images locally and launch the containers.
+
+### Access the App
+*   **Swagger API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+*   **Gateway Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+
+### Running the Test Suites
+AeroLock comes with a robust test suite spanning unit, E2E, security, and performance test suites:
+*   **E2E Tests**: `cd tests && poetry run pytest e2e/`
+*   **Security Suite**: `cd tests && poetry run pytest security/`
+*   **Load Testing**: `cd tests && poetry run locust -f performance/locustfile.py`
+
+---
+
+## 🚢 Cloud Deployment (Azure VM)
+The project is configured for continuous delivery using GitHub Actions and Kubernetes.
+*   **CD Pipeline**: Every merge to `main` builds and pushes the microservices to the GitHub Container Registry (`ghcr.io/hazalkoom/aerolock-*`).
+*   **Production Host**: Deployed to an **Azure Virtual Machine** running Ubuntu 24.04 LTS (Standard_B2als_v2, 2 vCPUs, 4 GiB RAM) in the Sweden Central region.
+
+*Detailed deployment setup and guides can be found in [docs/Deployment.md](docs/Deployment.md).*
