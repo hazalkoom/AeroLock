@@ -18,6 +18,14 @@ AeroLock is built using a modern, containerized microservices architecture:
 
 ---
 
+## 📡 Real-Time WebSockets (Seat Map Synchronization)
+AeroLock supports live, bi-directional client communications:
+*   **Endpoint**: `ws://aerolock-mohamed-ahmed.duckdns.org/api/v1/ws/flights/{flight_id}`
+*   **Mechanism**: When a user locks a seat via `POST /api/v1/booking/lock`, the Inventory Service broadcasts the event. The Gateway receives it and publishes it to a **Redis Pub/Sub channel**.
+*   **Result**: All active WebSocket clients watching that flight instantly receive a JSON payload with the updated seat map status (`locked` or `booked`) to prevent booking conflicts before they happen.
+
+---
+
 ## 🚀 How We Deployed the Project (Azure & Kubernetes)
 
 The application has been deployed to a production-grade cloud environment using the following steps:
