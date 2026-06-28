@@ -15,8 +15,8 @@ async def seed_database():
         flight1 = Flight(
             origin="CAI",
             destination="DXB",
-            departure_time=datetime.now(UTC) + timedelta(days=5),
-            arrival_time=datetime.now(UTC) + timedelta(days=5, hours=3),
+            departure_time=(datetime.now(UTC) + timedelta(days=5)).replace(tzinfo=None),
+            arrival_time=(datetime.now(UTC) + timedelta(days=5, hours=3)).replace(tzinfo=None),
             total_seats=10,
             price=250.00
         )
@@ -25,8 +25,8 @@ async def seed_database():
         flight2 = Flight(
             origin="LHR",
             destination="JFK",
-            departure_time=datetime.now(UTC) + timedelta(days=10),
-            arrival_time=datetime.now(UTC) + timedelta(days=10, hours=8),
+            departure_time=(datetime.now(UTC) + timedelta(days=10)).replace(tzinfo=None),
+            arrival_time=(datetime.now(UTC) + timedelta(days=10, hours=8)).replace(tzinfo=None),
             total_seats=10,
             price=450.00
         )
