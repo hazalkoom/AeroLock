@@ -2,7 +2,7 @@
 
 AeroLock is a high-performance, real-time distributed flight booking engine designed to prevent double-booking of flight seats using a Redis distributed locking mechanism and a PostgreSQL ACID ledger. It features extremely low-latency reads via Redis cache-aside caching, bullet-proof idempotent booking confirmations, and real-time updates via WebSockets.
 
-🌐 **Deployed Version:** [http://YOUR_AZURE_VM_IP](http://YOUR_AZURE_VM_IP) *(Replace with your Azure VM Public IP once deployed)*
+🌐 **Deployed Version:** [http://20.91.215.170](http://20.91.215.170)
 
 🚀 **Performance Benchmarks:** Our local development infrastructure sustains up to **800 concurrent users** and **over 300+ Requests Per Second (RPS)** with **0% failure rate** and a 95th percentile latency of under 350ms.
 
