@@ -1,13 +1,8 @@
 # Architecture
 
-## Current Architecture
+## System Architecture Diagram
 
-```text
-Client
-  |
-  v
-Backend
-```
+![AeroLock Architecture Diagram](images/architecture_diagram.jpg)
 
 ## Planned Architecture
 
