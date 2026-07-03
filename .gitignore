@@ -73,3 +73,5 @@ Thumbs.db
 # Private LLM / Study Files
 llm_handover.md
 lectures.md
+
+user-service/app/certs/*.pem
