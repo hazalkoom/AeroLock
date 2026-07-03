@@ -69,3 +69,7 @@ pytestdebug.log
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Private LLM / Study Files
+llm_handover.md
+lectures.md

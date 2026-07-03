@@ -17,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [gateway, inventory-service, search-service]
+        service: [gateway, inventory-service, search-service, user-service]
 
     steps:
       - name: Checkout repository
