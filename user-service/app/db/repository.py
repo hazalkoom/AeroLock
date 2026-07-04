@@ -22,7 +22,7 @@ class UserRepository:
     async def create_user(self, email: str, password: str, first_name: str, last_name: str) -> tuple[bool, str | User]:
         """Hashes the password and saves the new user to the database."""
         try:
-            hashed_pwd = get_password_hash(password)
+            hashed_pwd = await get_password_hash(password)
             new_user = User(
                 email=email,
                 password_hash=hashed_pwd,

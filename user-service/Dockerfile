@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY user-service/pyproject.toml ./
+COPY shared /shared
+COPY user-service/pyproject.toml user-service/poetry.lock* ./
 RUN pip install poetry && poetry config virtualenvs.create false && poetry install --no-root --no-interaction --no-ansi
 
 FROM python:3.12-slim

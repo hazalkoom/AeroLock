@@ -45,7 +45,7 @@ class UserService(user_pb2_grpc.UserServiceServicer):
             repo = UserRepository(session)
             user = await repo.get_user_by_email(request.email)
             
-            if not user or not verify_password(request.password, user.password_hash):
+            if not user or not await verify_password(request.password, user.password_hash):
                 logger.warning(f"Failed login attempt for {request.email}")
                 return user_pb2.AuthResponse(
                     success=False, 
