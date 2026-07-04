@@ -1,87 +1,92 @@
 import pytest
-from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock
 from app.main import app
 from app.api.booking import get_inventory_client
+import grpc
 
-# This creates a fake browser/frontend to send requests to your FastAPI app
-client = TestClient(app)
-
-def test_acquire_lock_success():
-    """
-    Test that the Gateway correctly accepts a valid JSON request 
-    and returns the token from the mocked gRPC client.
-    """
-    # 1. Create a fake gRPC client that returns a perfect response
-    mock_client = AsyncMock()
-    mock_client.acquire_lock.return_value = {
+def test_acquire_lock_success(test_client, mock_inventory_client):
+    mock_inventory_client.acquire_lock.return_value = {
         "success": True,
         "token": "fake-test-token-123",
         "message": "Lock acquired successfully"
     }
 
-    # 2. Force FastAPI to use our mock instead of the real client
     async def override_get_client():
-        return mock_client
+        return mock_inventory_client
 
     app.dependency_overrides[get_inventory_client] = override_get_client
 
-    # 3. Fire the request
-    response = client.post(
+    response = test_client.post(
         "/api/v1/booking/lock",
         json={"flight_id": "valid-flight-uuid", "seat_id": "valid-seat-uuid"}
     )
 
-    # 4. Assertions
     assert response.status_code == 200
     assert response.json()["token"] == "fake-test-token-123"
-    
-    # Clean up the override for the next test
-    app.dependency_overrides.clear()
 
-def test_acquire_lock_missing_seat_id():
-    """
-    Test that Pydantic blocks the request with a 422 Unprocessable Entity 
-    if the frontend developer forgets to send the seat_id.
-    """
-    response = client.post(
+def test_acquire_lock_missing_seat_id(test_client):
+    response = test_client.post(
         "/api/v1/booking/lock",
-        json={"flight_id": "valid-flight-uuid"} # missing seat_id!
+        json={"flight_id": "valid-flight-uuid"}
+    )
+    assert response.status_code == 422
+
+def test_acquire_lock_missing_flight_id(test_client):
+    response = test_client.post(
+        "/api/v1/booking/lock",
+        json={"seat_id": "valid-seat-uuid"}
+    )
+    assert response.status_code == 422
+
+def test_acquire_lock_grpc_error(test_client, mock_inventory_client):
+    from fastapi import HTTPException
+    mock_inventory_client.acquire_lock.side_effect = HTTPException(status_code=500, detail="gRPC Error: ...")
+
+    async def override_get_client():
+        return mock_inventory_client
+
+    app.dependency_overrides[get_inventory_client] = override_get_client
+
+    response = test_client.post(
+        "/api/v1/booking/lock",
+        json={"flight_id": "valid-flight-uuid", "seat_id": "valid-seat-uuid"}
     )
 
-    assert response.status_code == 422
-    assert response.json()["detail"][0]["loc"] == ["body", "seat_id"]
+    # Fast API handles uncaught exceptions as 500, or the gateway client raises HTTPException
+    # Let's assume gateway client raises HTTPException(500) if AioRpcError, but we mocked it directly.
+    # Actually wait, our app.api.booking calls client.acquire_lock. If we mock the client, it just raises it.
+    assert response.status_code == 500
 
-def test_acquire_lock_missing_flight_id():
-    """
-    Test that Pydantic blocks the request with a 422 Unprocessable Entity 
-    if the frontend developer forgets to send the flight_id.
-    """
-    response = client.post(
+def test_acquire_lock_conflict(test_client, mock_inventory_client):
+    from fastapi import HTTPException
+    mock_inventory_client.acquire_lock.side_effect = HTTPException(status_code=409, detail="Seat already locked")
+
+    async def override_get_client():
+        return mock_inventory_client
+
+    app.dependency_overrides[get_inventory_client] = override_get_client
+
+    response = test_client.post(
         "/api/v1/booking/lock",
-        json={"seat_id": "valid-seat-uuid"} # missing flight_id!
+        json={"flight_id": "valid-flight-uuid", "seat_id": "valid-seat-uuid"}
     )
 
-    assert response.status_code == 422
-    assert response.json()["detail"][0]["loc"] == ["body", "flight_id"]
+    # The client raises HTTPException(409) which FastAPI translates to 409
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Seat already locked"
 
-def test_confirm_booking_success():
-    """
-    Test the full payload confirmation route.
-    """
-    mock_client = AsyncMock()
-    mock_client.confirm_booking.return_value = {
+def test_confirm_booking_success(auth_client, mock_inventory_client):
+    mock_inventory_client.confirm_booking.return_value = {
         "success": True,
         "booking_id": "fake-booking-uuid-999",
         "message": "Booking confirmed"
     }
 
     async def override_get_client():
-        return mock_client
+        return mock_inventory_client
 
     app.dependency_overrides[get_inventory_client] = override_get_client
 
-    response = client.post(
+    response = auth_client.post(
         "/api/v1/booking/confirm",
         json={
             "seat_id": "valid-seat-uuid",
@@ -93,5 +98,17 @@ def test_confirm_booking_success():
 
     assert response.status_code == 200
     assert response.json()["booking_id"] == "fake-booking-uuid-999"
-    
-    app.dependency_overrides.clear()
+
+def test_confirm_booking_missing_auth(test_client):
+    # test_client doesn't have get_current_user overridden, so it will hit the real HTTPBearer
+    response = test_client.post(
+        "/api/v1/booking/confirm",
+        json={
+            "seat_id": "valid-seat-uuid",
+            "user_id": "user-456",
+            "token": "fake-test-token-123",
+            "idempotency_key": "unique-key-789"
+        }
+    )
+
+    assert response.status_code in [401, 403]

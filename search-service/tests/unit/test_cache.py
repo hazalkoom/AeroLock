@@ -4,8 +4,9 @@ from unittest.mock import patch, AsyncMock
 from app.cache import CacheManager
 
 # We patch the Redis connection so it doesn't try to connect to localhost:6379 during tests
+@pytest.mark.asyncio
 @patch("app.cache.Redis.from_url")
-def test_cache_hit(mock_redis_url):
+async def test_cache_hit(mock_redis_url):
     # Setup the mock Redis instance
     mock_redis_instance = AsyncMock()
     mock_redis_url.return_value = mock_redis_instance
@@ -17,15 +18,13 @@ def test_cache_hit(mock_redis_url):
     manager = CacheManager()
     
     # Execute
-    result = pytest.helpers_namespace = manager.get_cached_search("CAI", "DXB", "2026-12-01")
-    
-    import asyncio
-    result = asyncio.run(manager.get_cached_search("CAI", "DXB", "2026-12-01"))
+    result = await manager.get_cached_search("CAI", "DXB", "2026-12-01")
 
     # Assertions
     assert result == fake_flight_data
     mock_redis_instance.get.assert_called_once()
 
+@pytest.mark.asyncio
 @patch("app.cache.Redis.from_url")
 async def test_cache_miss(mock_redis_url):
     mock_redis_instance = AsyncMock()
@@ -39,6 +38,7 @@ async def test_cache_miss(mock_redis_url):
 
     assert result is None
 
+@pytest.mark.asyncio
 @patch("app.cache.Redis.from_url")
 async def test_set_cache(mock_redis_url):
     mock_redis_instance = AsyncMock()

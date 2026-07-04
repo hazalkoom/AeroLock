@@ -15,6 +15,7 @@ def mock_request():
 def mock_context():
     return AsyncMock()
 
+@pytest.mark.asyncio
 @patch("app.server.CacheManager")
 async def test_search_flights_cache_hit(MockCacheManager, mock_request, mock_context):
     """
@@ -45,6 +46,7 @@ async def test_search_flights_cache_hit(MockCacheManager, mock_request, mock_con
         assert response.flights[0].id == "uuid-123"
         MockSession.assert_not_called() # CRITICAL: DB was bypassed!
 
+@pytest.mark.asyncio
 @patch("app.server.CacheManager")
 @patch("app.server.SearchRepository")
 @patch("app.server.AsyncSessionLocal")

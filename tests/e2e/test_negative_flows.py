@@ -23,11 +23,12 @@ async def test_lock_nonexistent_seat():
         assert "Seat does not exist" in res.json()["detail"]
 
 @pytest.mark.asyncio
-async def test_confirm_invalid_token():
+async def test_confirm_invalid_token(auth_headers):
     """Negative: Try to confirm a booking using a fake Redis token."""
     import uuid
     run_hex = uuid.uuid4().hex
     headers = {"X-Forwarded-For": f"10.{int(run_hex[:2], 16) % 255}.{int(run_hex[2:4], 16) % 255}.51"}
+    headers.update(auth_headers)
     async with httpx.AsyncClient(headers=headers) as client:
         payload = {
             "seat_id": str(uuid.uuid4()),
