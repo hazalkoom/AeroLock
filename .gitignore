@@ -75,3 +75,4 @@ llm_handover.md
 lectures.md
 
 user-service/app/certs/*.pem
+gateway/app/certs/*.pem

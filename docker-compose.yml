@@ -51,6 +51,21 @@ services:
     ports:
       - "50052:50052"
 
+
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    container_name: aerolock-user-service
+    ports:
+      - "50053:50053"
+    environment:
+      # Notice we use 'postgres' as the host, not localhost, because it's inside the docker network
+      - DATABASE_URL=postgresql+asyncpg://aerolock_user:password123@postgres:5432/aerolock
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   search-service:
     build:
       context: .

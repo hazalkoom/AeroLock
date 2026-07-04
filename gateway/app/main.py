@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 import os
 from app.core.logging import logger
 from app.core.events import init_redis, close_redis
-from app.api import booking, search
+from app.api import booking, search, auth
 from app.api import websocket
 from app.middleware.rate_limit import setup_rate_limiting, limiter
 import uvicorn
@@ -58,6 +58,7 @@ async def health_check(request: Request):
 app.include_router(booking.router, prefix="/api/v1/booking", tags=["Booking Flow"])
 app.include_router(search.router, prefix="/api/v1/search", tags=["Search"])
 app.include_router(websocket.router, prefix="/api/v1/ws", tags=["Real-Time"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 
 if __name__ == "__main__":
     gateway_port = int(os.getenv("GATEWAY_PORT", 8000))

@@ -9,7 +9,7 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir fastapi uvicorn[standard] grpcio grpcio-tools pydantic-settings slowapi "redis[asyncio]"
+    && pip install --no-cache-dir fastapi uvicorn[standard] email-validator grpcio grpcio-tools pydantic-settings slowapi "redis[asyncio]" "PyJWT[crypto]"
 
 COPY shared/ /app/shared/
 COPY gateway/ /app/gateway/

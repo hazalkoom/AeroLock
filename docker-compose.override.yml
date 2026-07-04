@@ -14,6 +14,12 @@ services:
       - ./inventory-service:/app/inventory-service
       - ./shared:/app/shared
 
+  
+  user-service:
+    volumes:
+      - ./user-service:/app/user-service
+      - ./shared:/app/shared
+
   search-service:
     # Mount the local search and shared code
     volumes:
