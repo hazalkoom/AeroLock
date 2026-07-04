@@ -12,101 +12,92 @@
                                   | REST (HTTP/TLS)
                                   v
                           Gateway Service
-                      (FastAPI - Auth, Rate Limit,
+                      (FastAPI - Auth Validation, Rate Limit,
                           Routing)
                                   |
-                +-----------------+-----------------+
-                |                                    |
-                | gRPC                               | gRPC
-                v                                    v
-        Search Service                     Inventory Service
-        (FastAPI gRPC worker)              (FastAPI gRPC worker)
-                |                                    |
-                | READ                               | SET NX / Lua
-                v                                    v
-            Redis                                 Redis
-       (search cache, TTL)                  (seat locks, AOF)
-                                                     |
-                                                     | WRITE (ACID)
-                                                     v
-                                              PostgreSQL
-                                       (bookings, idempotency keys)
+            +---------------------+---------------------+
+            |                     |                     |
+            | gRPC                | gRPC                | gRPC
+            v                     v                     v
+    Search Service         Inventory Service       User Service
+    (gRPC Searcher)        (gRPC Booker)           (gRPC Cryptographer)
+            |                     |                     |
+            | READ                | SET NX / Lua        | JWT signing
+            v                     v                     v
+        Redis                  Redis                PostgreSQL
+   (search cache, TTL)    (seat locks, AOF)        (users ledger)
+                                  |
+                                  | WRITE (ACID)
+                                  v
+                           PostgreSQL
+                    (bookings, idempotency keys, passengers)
 ```
 
-### Two consistency paths
+### Consistency Paths
 
-- **AP path (Search):** Gateway -> Search Service -> Redis cache.
-  Optimized for availability and low latency. Cache misses fall back to
-  PostgreSQL.
-- **CP path (Booking):** Gateway -> Inventory Service -> Redis lock ->
-  PostgreSQL. Optimized for correctness. Every write is guarded by a
-  distributed lock and an idempotency key.
+- **AP path (Search):** Gateway -> Search Service -> Redis cache. Optimized for availability and low latency. Cache misses fall back to PostgreSQL.
+- **CP path (Booking):** Gateway -> Inventory Service -> Redis lock -> PostgreSQL. Optimized for correctness. Every write is guarded by a distributed lock and an idempotency key. Requires authentication token validated via Gateway.
+- **Security Path (Auth):** Gateway -> User Service. Generates secure RS256 JWT signatures for stateless validation.
+
+---
 
 ## Data Model
 
-![Entity Relationship Diagram](images/erd-v1.png)
-
 ### Entities
 
+**users**
+- `id` (PK, UUID)
+- `username` (VARCHAR, UNIQUE)
+- `hashed_password` (VARCHAR, using native bcrypt)
+
 **flights**
-- `id` (PK)
-- `origin`, `destination`
-- `departure_time`, `arrival_time`
-- `total_seats`
-- `price`
+- `id` (PK, UUID)
+- `origin`, `destination` (VARCHAR)
+- `departure_time`, `arrival_time` (TIMESTAMP)
+- `total_seats` (INTEGER)
+- `price` (DECIMAL)
 
 **seats**
-- `id` (PK)
+- `id` (PK, UUID)
 - `flight_id` (FK -> flights)
-- `seat_number`
+- `seat_number` (VARCHAR)
 - `status` (`available`, `booked`)
 
 **bookings**
-- `id` (PK)
+- `id` (PK, UUID)
 - `seat_id` (FK -> seats)
-- `passenger_name`
+- `user_id` (FK -> users)
 - `idempotency_key` (UNIQUE)
+- `pnr` (VARCHAR, passenger record locator)
+- `total_price` (DECIMAL)
 - `status` (`confirmed`, `failed`)
-- `created_at`
+- `created_at` (TIMESTAMP)
 
-### Redis key patterns
+**passengers**
+- `id` (PK, UUID)
+- `booking_id` (FK -> bookings)
+- `name` (VARCHAR)
+- `passport_number` (VARCHAR)
 
-- `seat:{flight_id}:{seat_id}:lock` -> `{uuid_token}` (TTL 720s)
-- `search:{query_hash}` -> cached flight results (TTL 60s)
+---
 
 ## Responsibilities
 
 ### Gateway Service
+* Accept and validate incoming REST requests.
+* Intercept requests to `/booking/confirm` using `get_current_user` dependency to mathematically verify RS256 JWT.
+* Route search, booking, and auth requests to their respective gRPC backend services.
 
-* Accept and validate incoming requests
-* Enforce per-key rate limiting (100 req/min)
-* Route search requests to the Search Service via gRPC
-* Route booking requests to the Inventory Service via gRPC
-* Translate internal gRPC errors into HTTP status codes
-  (e.g. lock conflict -> `423 Locked`)
+### User Service
+* Salt and hash user passwords using native `bcrypt`.
+* Manage the SQL ledger for user credentials.
+* Sign asymmetric JWTs using the secure RS256 private key.
 
 ### Search Service
-
-* Query PostgreSQL for flight availability
-* Cache results in Redis with a short TTL
-* Serve cached results when available (AP path)
+* Query PostgreSQL for flight availability.
+* Cache results in Redis with a short TTL (60s).
 
 ### Inventory Service
-
-* Acquire distributed seat locks via Redis `SET NX` with TTL
-* Run the Lua confirm/release script for atomic token validation
-* Re-check seat availability in PostgreSQL if the lock has expired
-  before payment confirmation (webhook recovery flow)
-* Commit confirmed bookings to PostgreSQL using idempotency keys
-* Release locks on booking failure or cancellation
-
-### Redis
-
-* Store search result cache (short TTL, AP path)
-* Store seat locks with TTL (CP path), persisted via AOF so locks
-  survive a restart without a separate cleanup worker
-
-### PostgreSQL
-
-* Store flights, seats, and bookings
-* Enforce `idempotency_key` uniqueness to make booking writes safe to retry
+* Acquire distributed seat locks via Redis `SET NX` with TTL (720s).
+* Run the Lua confirm/release script for atomic token validation.
+* Commit confirmed bookings and maps passengers inside PostgreSQL under an ACID transaction.
