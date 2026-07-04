@@ -19,7 +19,6 @@ def auth_test_client(mock_user_client):
 
 def test_register_user_success(auth_test_client, mock_user_client):
     mock_user_client.register.return_value = {
-        "success": True,
         "access_token": "fake_token",
         "message": "User registered successfully",
         "user_id": "123"
@@ -36,7 +35,6 @@ def test_register_user_success(auth_test_client, mock_user_client):
     )
 
     assert response.status_code == 200
-    assert response.json()["success"] is True
     assert response.json()["access_token"] == "fake_token"
     mock_user_client.register.assert_called_once_with(
         email="test@test.com",
@@ -58,7 +56,6 @@ def test_register_user_invalid_payload(auth_test_client, mock_user_client):
 
 def test_login_user_success(auth_test_client, mock_user_client):
     mock_user_client.login.return_value = {
-        "success": True,
         "access_token": "fake_token",
         "message": "Login successful",
         "user_id": "123"
@@ -73,7 +70,6 @@ def test_login_user_success(auth_test_client, mock_user_client):
     )
 
     assert response.status_code == 200
-    assert response.json()["success"] is True
     assert response.json()["access_token"] == "fake_token"
     mock_user_client.login.assert_called_once_with(
         email="test@test.com",

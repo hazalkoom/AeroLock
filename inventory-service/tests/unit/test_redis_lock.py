@@ -56,3 +56,16 @@ async def test_release_lock_success():
     
     assert released is True
     mock_redis.eval.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_release_lock_failure():
+    mock_redis = AsyncMock()
+    # The Lua script returns 0 if it couldn't find the key or token didn't match
+    mock_redis.eval.return_value = 0
+
+    manager = RedisLockManager(mock_redis)
+    
+    released = await manager.release_lock("fake-seat", "wrong-token")
+    
+    assert released is False
+    mock_redis.eval.assert_called_once()

@@ -49,3 +49,37 @@ async def test_lock_input_validation_malformed_json():
     async with httpx.AsyncClient(headers=headers) as client:
         res = await client.post(f"{BASE_URL}/booking/lock", json=payload_long)
         assert res.status_code in (422, 400, 409) # Should be rejected gracefully without a 500
+
+@pytest.mark.asyncio
+async def test_auth_input_validation():
+    """
+    Test that authentication endpoints reject invalid data (e.g. SQLi, extremely long fields)
+    """
+    run_hex = uuid.uuid4().hex
+    headers = {"X-Forwarded-For": f"10.{int(run_hex[:2], 16) % 255}.{int(run_hex[2:4], 16) % 255}.62"}
+    
+    malicious_email = "test@example.com' OR 1=1--"
+    payload = {
+        "email": malicious_email,
+        "password": "pass"
+    }
+    
+    async with httpx.AsyncClient(headers=headers) as client:
+        res = await client.post(f"{BASE_URL}/auth/login", json=payload)
+        # Should not crash the server or return 500
+        assert res.status_code in (422, 401, 400, 200)
+        if res.status_code == 200:
+            assert res.json()["success"] is False
+            
+    payload_long = {
+        "email": "a" * 1000 + "@example.com",
+        "password": "p" * 1000
+    }
+    
+    async with httpx.AsyncClient(headers=headers) as client:
+        res = await client.post(f"{BASE_URL}/auth/login", json=payload_long)
+        # Should not crash the server
+        assert res.status_code in (422, 401, 400, 200)
+        if res.status_code == 200:
+            assert res.json()["success"] is False
+

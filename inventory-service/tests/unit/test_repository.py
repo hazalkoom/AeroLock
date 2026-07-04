@@ -48,3 +48,34 @@ async def test_create_booking_duplicate_idempotency():
     assert success is False
     mock_session.rollback.assert_awaited_once()
     assert "Duplicate" in message
+
+@pytest.mark.asyncio
+async def test_create_booking_seat_not_available():
+    mock_session = AsyncMock()
+    mock_seat = Seat(status="booked")
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_seat
+    mock_session.execute.return_value = mock_result
+    
+    repo = InventoryRepository(mock_session)
+    success, message = await repo.create_booking(
+        seat_id="fake-seat", user_id="user", idempotency_key="key"
+    )
+    
+    assert success is False
+    assert "Seat is not available" in message
+    
+@pytest.mark.asyncio
+async def test_create_booking_seat_not_found():
+    mock_session = AsyncMock()
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_result
+    
+    repo = InventoryRepository(mock_session)
+    success, message = await repo.create_booking(
+        seat_id="fake-seat", user_id="user", idempotency_key="key"
+    )
+    
+    assert success is False
+    assert "Seat is not available" in message
