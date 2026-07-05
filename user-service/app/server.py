@@ -30,7 +30,7 @@ class UserService(user_pb2_grpc.UserServiceServicer):
                     user_id=""
                 )
                 
-            token = create_access_token(result.id, result.role)
+            token = await create_access_token(result.id, result.role)
             logger.info(f"User registered successfully: {result.id}")
             return user_pb2.AuthResponse(
                 success=True, 
@@ -54,7 +54,7 @@ class UserService(user_pb2_grpc.UserServiceServicer):
                     user_id=""
                 )
                 
-            token = create_access_token(user.id, user.role)
+            token = await create_access_token(user_id=user.id, role=user.role)
             logger.info(f"Login successful for user: {user.id}")
             return user_pb2.AuthResponse(
                 success=True, 

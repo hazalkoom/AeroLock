@@ -35,14 +35,14 @@ setup_rate_limiting(app)
 # 2. Global Request Logging Middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    start_time = time.time()
+    # start_time = time.time()
     response = await call_next(request)
-    process_time = time.time() - start_time
+    # process_time = time.time() - start_time
     
     # Spits out a beautiful JSON log for every single request
-    logger.info(
-        f"Path: {request.url.path} | Method: {request.method} | Status: {response.status_code} | Time: {process_time:.4f}s"
-    )
+    # logger.info(
+    #     f"Path: {request.url.path} | Method: {request.method} | Status: {response.status_code} | Time: {process_time:.4f}s"
+    # )
     return response
 
 # The Health Check (Limited to 5 per minute so bots don't DDOS the ping)

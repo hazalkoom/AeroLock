@@ -6,8 +6,12 @@ from aerolock_common.logging import setup_logger
 logger = setup_logger("gateway-user-client")
 
 class UserClient:
+    _channel = None
+
     def __init__(self, host='user-service', port=50053):
-        self.channel = grpc.aio.insecure_channel(f'{host}:{port}')
+        if UserClient._channel is None:
+            UserClient._channel = grpc.aio.insecure_channel(f'{host}:{port}')
+        self.channel = UserClient._channel
         self.stub = user_pb2_grpc.UserServiceStub(self.channel)
 
     async def register(self, email, password, first_name, last_name):

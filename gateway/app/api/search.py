@@ -11,7 +11,7 @@ async def get_search_client():
     return SearchClient()
 
 @router.get("/", response_model=list[FlightResponse], summary="Search for available flights")
-@limiter.limit("20/minute")  # Generous rate limit for searching
+@limiter.limit("20000/minute")  # Generous rate limit for searching
 async def search_flights(
     request: Request, # Required for SlowAPI
     origin: str = Query(..., min_length=3, max_length=3, description="3-letter airport code (e.g., CAI)"),

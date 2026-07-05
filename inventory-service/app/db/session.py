@@ -7,7 +7,7 @@ DATABASE_URL = os.getenv(
     "postgresql+asyncpg://aerolock_user:password123@localhost:5432/aerolock"
 )
 
-engine = create_async_engine(DATABASE_URL, echo=False)
+engine = create_async_engine(DATABASE_URL, echo=False, pool_size=500, max_overflow=200)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

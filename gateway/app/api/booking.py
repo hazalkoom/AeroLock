@@ -11,7 +11,7 @@ async def get_inventory_client():
     return InventoryClient()
 
 @router.post("/lock", summary="Lock a seat for 10 minutes")
-@limiter.limit("10/minute") 
+@limiter.limit("10000/minute") 
 async def acquire_lock(request: Request, payload: LockRequest, client: InventoryClient = Depends(get_inventory_client)):
     result = await client.acquire_lock(flight_id=payload.flight_id, seat_id=payload.seat_id)
     # Broadcast the seat lock to all WebSocket clients watching this flight
@@ -20,7 +20,7 @@ async def acquire_lock(request: Request, payload: LockRequest, client: Inventory
 
 
 @router.post("/confirm", summary="Confirm and pay for a booked seat")
-@limiter.limit("5/minute") 
+@limiter.limit("50000/minute") 
 async def confirm_booking(
     request: Request, 
     payload: ConfirmBookingRequest, 

@@ -4,10 +4,13 @@ import os
 from aerolock_common.generated import inventory_pb2, inventory_pb2_grpc
 
 class InventoryClient:
+    _channel = None
+
     def __init__(self):
-        # Establish an asynchronous channel to the Inventory Service
-        inventory_service_url = os.getenv("INVENTORY_SERVICE_URL", "inventory-service:50052")
-        self.channel = grpc.aio.insecure_channel(inventory_service_url)
+        if InventoryClient._channel is None:
+            inventory_service_url = os.getenv("INVENTORY_SERVICE_URL", "inventory-service:50052")
+            InventoryClient._channel = grpc.aio.insecure_channel(inventory_service_url)
+        self.channel = InventoryClient._channel
         self.stub = inventory_pb2_grpc.InventoryServiceStub(self.channel)
 
     async def acquire_lock(self, flight_id: str, seat_id: str) -> dict:
