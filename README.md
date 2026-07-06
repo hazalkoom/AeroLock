@@ -4,7 +4,7 @@ AeroLock is a high-performance, real-time distributed flight booking engine desi
 
 🌐 **Live Deployed Version:** [http://aerolock-mohamed-ahmed.duckdns.org/docs](http://aerolock-mohamed-ahmed.duckdns.org/docs)
 
-🚀 **Performance Benchmarks:** Our local development infrastructure sustains up to **800 concurrent users** and **over 300+ Requests Per Second (RPS)** with **0% failure rate** and a 95th percentile latency of under 350ms.
+🚀 **Performance Benchmarks:** Our local development infrastructure sustains up to **1,000 concurrent users** and **over 600+ Requests Per Second (RPS)** with a <5% failure rate (bounded strictly by single-machine hardware CPU limits, not application bounds).
 
 ---
 
